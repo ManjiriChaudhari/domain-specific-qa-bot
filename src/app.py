@@ -1,12 +1,136 @@
-
 import streamlit as st
+import faiss
+import numpy as np
+
+from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+# ----------------------------
+# Page Title
+# ----------------------------
 
 st.title("📈 Trading RAG Assistant")
+st.write("Ask trading and finance related questions")
 
-st.write("Trading AI Assistant Project")
+# ----------------------------
+# Load Knowledge Base
+# ----------------------------
 
-question = st.text_input("Ask a trading question")
+with open("data/trading_knowledge.txt", "r") as f:
+    text = f.read()
+
+chunks = [chunk.strip() for chunk in text.split("\n\n") if chunk.strip()]
+
+# ----------------------------
+# Load Embedding Model
+# ----------------------------
+
+@st.cache_resource
+def load_embedding_model():
+    return SentenceTransformer(
+        "sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+embedding_model = load_embedding_model()
+
+# ----------------------------
+# Load FAISS Index
+# ----------------------------
+
+index = faiss.read_index(
+    "models/trading_index.faiss"
+)
+
+# ----------------------------
+# Load FLAN-T5
+# ----------------------------
+
+@st.cache_resource
+def load_generator():
+
+    model_name = "google/flan-t5-base"
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name
+    )
+
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        model_name
+    )
+
+    return tokenizer, model
+
+tokenizer, model = load_generator()
+
+# ----------------------------
+# Retrieval Function
+# ----------------------------
+
+def retrieve_context(query, k=3):
+
+    query_embedding = embedding_model.encode(
+        [query]
+    )
+
+    D, I = index.search(
+        np.array(query_embedding).astype("float32"),
+        k
+    )
+
+    contexts = [chunks[idx] for idx in I[0]]
+
+    return "\n".join(contexts)
+
+# ----------------------------
+# RAG Function
+# ----------------------------
+
+def ask_trading_bot(question):
+
+    context = retrieve_context(question)
+
+    prompt = f"""
+Answer the question using the context below.
+
+Context:
+{context}
+
+Question:
+{question}
+
+Answer:
+"""
+
+    inputs = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=512
+    )
+
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=50
+    )
+
+    answer = tokenizer.decode(
+        outputs[0],
+        skip_special_tokens=True
+    )
+
+    return answer
+
+# ----------------------------
+# User Interface
+# ----------------------------
+
+question = st.text_input(
+    "Ask your trading question:"
+)
 
 if question:
-    st.write("Answer:")
-    st.write("Connect RAG pipeline here")
+
+    answer = ask_trading_bot(question)
+
+    st.subheader("Answer")
+    st.write(answer)
