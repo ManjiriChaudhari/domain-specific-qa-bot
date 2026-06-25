@@ -5,6 +5,12 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
+st.set_page_config(
+    page_title="Trading RAG Assistant",
+    page_icon="📈",
+    layout="wide"
+)
+
 # ----------------------------
 # Page Title
 # ----------------------------
@@ -118,19 +124,40 @@ Answer:
         skip_special_tokens=True
     )
 
-    return answer
+    return answer, context
 
 # ----------------------------
 # User Interface
 # ----------------------------
 
-question = st.text_input(
-    "Ask your trading question:"
+# Initialize chat history
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# User input
+
+question = st.chat_input(
+    "Ask a trading question..."
 )
+
+# Process question
 
 if question:
 
+    st.session_state.messages.append(
+        {"role": "user", "content": question}
+    )
+
     answer = ask_trading_bot(question)
 
-    st.subheader("Answer")
-    st.write(answer)
+    st.session_state.messages.append(
+        {"role": "assistant", "content": answer}
+    )
+
+# Display chat history
+
+for msg in st.session_state.messages:
+
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
