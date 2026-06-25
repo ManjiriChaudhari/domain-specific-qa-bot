@@ -10,6 +10,25 @@ st.set_page_config(
     page_icon="📈",
     layout="wide"
 )
+with st.sidebar:
+    st.header("📊 About")
+    
+    st.write(
+        """
+        Trading RAG Assistant
+
+        - FAISS Vector Search
+        - MiniLM Embeddings
+        - FLAN-T5 Generation
+        - Streamlit UI
+        """
+    )
+    st.divider()
+    
+    if st.button("🗑️ Clear Chat"):
+        st.session_state.messages = []
+        st.rerun()
+
 
 # ----------------------------
 # Page Title
@@ -99,7 +118,6 @@ def retrieve_context(query, k=3):
     contexts = [chunks[idx] for idx in I[0]]
 
     return "\n".join(contexts)
-
 # ----------------------------
 # RAG Function
 # ----------------------------
@@ -131,10 +149,11 @@ Answer:
         **inputs,
         max_new_tokens=50
     )
-
-    answer, context = tokenizer.decode(
-        outputs[0],
-        skip_special_tokens=True
+    
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=100,
+        temperature=0.7
     )
 
     return answer, context
@@ -159,18 +178,22 @@ question = st.chat_input(
 if question:
 
     st.session_state.messages.append(
-        {"role": "user", "content": question}
+        {
+            "role": "user",
+            "content": question
+        }
     )
 
-    answer = ask_trading_bot(question)
-
-st.session_state.messages.append(
-    {
-        "role": "assistant",
-        "content": answer,
-        "context": context
-    }
-)
+    with st.spinner("Thinking..."):
+        answer, context = ask_trading_bot(question)
+        
+    st.session_state.messages.append(
+        {
+            "role": "assistant",
+            "content": answer,
+            "context": context
+        }
+    )
 
 # Display chat history
 
@@ -183,6 +206,10 @@ for msg in st.session_state.messages:
         if msg["role"] == "assistant":
 
             if "context" in msg:
-
-                with st.expander("Retrieved Context"):
-                    st.write(msg["context"])
+                with st.expander("📚 Retrieved Knowledge"):
+                    st.code(msg["context"])
+                    
+st.markdown("---")
+st.caption(
+    "Built using Streamlit, FAISS, Sentence Transformers and FLAN-T5"
+)
