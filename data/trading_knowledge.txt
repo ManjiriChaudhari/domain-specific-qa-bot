@@ -1,0 +1,20 @@
+
+RSI stands for Relative Strength Index. It is a momentum indicator used in technical analysis.
+
+MACD stands for Moving Average Convergence Divergence. It helps identify trend changes.
+
+A stop-loss order is used to limit losses by automatically closing a position at a specified level.
+
+A call option gives the buyer the right to purchase an asset at a specified price.
+
+A put option gives the buyer the right to sell an asset at a specified price.
+
+Support is a price level where demand prevents further decline.
+
+Resistance is a price level where selling pressure prevents further price increases.
+
+Swing trading involves holding positions for several days or weeks.
+
+Scalping is a trading strategy that profits from small price movements.
+
+Risk-reward ratio compares the potential profit of a trade to its potential loss.
