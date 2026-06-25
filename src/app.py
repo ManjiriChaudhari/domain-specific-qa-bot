@@ -16,6 +16,19 @@ st.set_page_config(
 # ----------------------------
 
 st.title("📈 Trading RAG Assistant")
+st.markdown(
+    """
+    Ask questions about:
+
+    • RSI
+    • MACD
+    • Stop Loss
+    • Swing Trading
+    • Bull Market
+    • Bear Market
+    • Technical Analysis
+    """
+)
 st.write("Ask trading and finance related questions")
 
 # ----------------------------
@@ -119,7 +132,7 @@ Answer:
         max_new_tokens=50
     )
 
-    answer = tokenizer.decode(
+    answer, context = tokenizer.decode(
         outputs[0],
         skip_special_tokens=True
     )
@@ -151,13 +164,25 @@ if question:
 
     answer = ask_trading_bot(question)
 
-    st.session_state.messages.append(
-        {"role": "assistant", "content": answer}
-    )
+st.session_state.messages.append(
+    {
+        "role": "assistant",
+        "content": answer,
+        "context": context
+    }
+)
 
 # Display chat history
 
 for msg in st.session_state.messages:
 
     with st.chat_message(msg["role"]):
+
         st.write(msg["content"])
+
+        if msg["role"] == "assistant":
+
+            if "context" in msg:
+
+                with st.expander("Retrieved Context"):
+                    st.write(msg["context"])
